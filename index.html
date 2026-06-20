@@ -59,15 +59,15 @@
 
   .logo-mark {
     width: 34px; height: 34px;
-    background: var(--green);
     border-radius: 9px;
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 0 18px var(--green-glow);
   }
 
-  .logo-mark svg { width: 18px; height: 18px; }
+  .logo-mark img { width: 34px; height: 34px; object-fit: cover; }
 
   .nav-right {
     display: flex;
@@ -716,12 +716,9 @@
 <nav>
   <a href="#" class="nav-logo">
     <div class="logo-mark">
-      <!-- Upward pulse / recovery mark -->
-      <svg viewBox="0 0 24 24" fill="none" stroke="#07090C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="3,14 7,10 11,16 15,6 19,10 21,8"/>
-      </svg>
+      <img src="./assets/claimflow-logo.jpg" alt="ClaimFlow AI">
     </div>
-    ClaimFlow
+    ClaimFlow <span style="color:var(--green);font-size:12px;font-weight:700;margin-left:1px;">AI</span>
   </a>
   <div class="nav-right">
     <ul class="nav-links">
@@ -919,10 +916,8 @@
     <!-- Brand + Compliance Badges -->
     <div class="footer-brand-col">
       <a href="#" class="footer-logo">
-        <div class="logo-mark" style="width:30px;height:30px;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#07090C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3,14 7,10 11,16 15,6 19,10 21,8"/>
-          </svg>
+        <div class="logo-mark" style="width:30px;height:30px;border-radius:7px;overflow:hidden;background:transparent;box-shadow:none;">
+          <img src="./assets/claimflow-logo.jpg" alt="ClaimFlow AI" style="width:30px;height:30px;object-fit:cover;">
         </div>
         ClaimFlow AI
       </a>
