@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClaimFlow AI — Recover What's Yours</title>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg:        #080C10;
+    --bg-card:   #0E1318;
+    --bg-glass:  rgba(255,255,255,0.03);
+    --border:    rgba(255,255,255,0.07);
+    --border-hi: rgba(255,255,255,0.12);
+    --green:     #00D37F;
+    --green-dim: rgba(0,211,127,0.12);
+    --green-glow:rgba(0,211,127,0.25);
+    --blue:      #3B82F6;
+    --text-1:    #F0F4F8;
+    --text-2:    #8A9BB0;
+    --text-3:    #4A5568;
+    --red:       #FF4D4D;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text-1);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ── Noise texture overlay ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    background: rgba(8,12,16,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.4px;
+  }
+
+  .logo-mark {
+    width: 32px; height: 32px;
+    background: var(--green);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    color: #080C10;
+    box-shadow: 0 0 20px var(--green-glow);
+  }
+
+  .logo-ai {
+    color: var(--green);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    background: var(--green-dim);
+    padding: 2px 7px;
+    border-radius: 20px;
+    border: 1px solid rgba(0,211,127,0.2);
+    margin-left: 2px;
+    vertical-align: middle;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--text-2);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--text-1); }
+
+  .nav-cta {
+    background: var(--green);
+    color: #080C10;
+    border: none;
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+
+  .nav-cta:hover {
+    background: #00F090;
+    box-shadow: 0 0 20px var(--green-glow);
+  }
+
+  /* ── Sections ── */
+  section { position: relative; z-index: 1; }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 24px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(0,211,127,0.08) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -60%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--green-dim);
+    border: 1px solid rgba(0,211,127,0.25);
+    border-radius: 40px;
+    padding: 8px 18px;
+    font-size: 13px;
+    color: var(--green);
+    font-weight: 500;
+    margin-bottom: 32px;
+    letter-spacing: 0.2px;
+  }
+
+  .hero-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .hero h1 {
+    font-size: clamp(42px, 7vw, 80px);
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1.05;
+    max-width: 900px;
+    margin-bottom: 24px;
+  }
+
+  .hero h1 .highlight {
+    color: var(--green);
+    position: relative;
+  }
+
+  .hero-sub {
+    font-size: clamp(16px, 2vw, 20px);
+    color: var(--text-2);
+    max-width: 580px;
+    line-height: 1.65;
+    margin-bottom: 48px;
+  }
+
+  .hero-cta-group {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 72px;
+  }
+
+  .btn-primary {
+    background: var(--green);
+    color: #080C10;
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover {
+    background: #00F090;
+    box-shadow: 0 0 32px var(--green-glow);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-2);
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid var(--border-hi);
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  .btn-secondary:hover {
+    color: var(--text-1);
+    border-color: rgba(255,255,255,0.2);
+  }
+
+  /* ── Hero Stats Bar ── */
+  .hero-stats {
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--bg-card);
+    overflow: hidden;
+    max-width: 720px;
+    width: 100%;
+  }
+
+  .hero-stat {
+    flex: 1;
+    padding: 24px 20px;
+    text-align: center;
+    border-right: 1px solid var(--border);
+  }
+
+  .hero-stat:last-child { border-right: none; }
+
+  .hero-stat-num {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--green);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .hero-stat-label {
+    font-size: 12px;
+    color: var(--text-3);
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+
+  /* ── Section Layout ── */
+  .section-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 100px 40px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-size: clamp(32px, 4vw, 48px);
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    margin-bottom: 20px;
+  }
+
+  .section-sub {
+    font-size: 18px;
+    color: var(--text-2);
+    max-width: 580px;
+    line-height: 1.65;
+  }
+
+  /* ── Problem Section ── */
+  .problem {
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    margin-top: 60px;
+  }
+
+  .problem-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .problem-card {
+    background: rgba(255,77,77,0.06);
+    border: 1px solid rgba(255,77,77,0.15);
+    border-radius: 12px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .problem-icon {
+    font-size: 22px;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .problem-card h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--text-1);
+  }
+
+  .problem-card p {
+    font-size: 13px;
+    color: var(--text-2);
+    line-height: 1.55;
+  }
+
+  .problem-quote {
+    background: var(--bg-glass);
+    border: 1px solid var(--border-hi);
+    border-radius: 16px;
+    padding: 36px;
+  }
+
+  .big-stat {
+    font-size: 72px;
+    font-weight: 900;
+    letter-spacing: -3px;
+    line-height: 1;
+    background: linear-gradient(135deg, #fff 0%, var(--text-2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+
+  .big-stat-label {
+    font-size: 16px;
+    color: var(--text-2);
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+
+  .sub-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .sub-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+  }
+
+  .sub-stat-label { color: var(--text-2); }
+  .sub-stat-val { font-weight: 700; color: var(--text-1); }
+
+  /* ── How It Works ── */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    margin-top: 60px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--border);
+  }
+
+  .step {
+    background: var(--bg-card);
+    padding: 36px 28px;
+    position: relative;
+  }
+
+  .step-num {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .step-icon {
+    font-size: 28px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  .step h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    letter-spacing: -0.3px;
+  }
+
+  .step p {
+    font-size: 13px;
+    color: var(--text-2);
+    line-height: 1.6;
+  }
+
+  .step-connector {
+    position: absolute;
+    right: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    background: var(--green);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #080C10;
+    font-weight: 800;
+    z-index: 2;
+    box-shadow: 0 0 12px var(--green-glow);
+  }
+
+  /* ── Model Section ── */
+  .model-section {
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .model-card {
+    margin-top: 60px;
+    border: 1px solid var(--border-hi);
+    border-radius: 20px;
+    overflow: hidden;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .model-header {
+    background: var(--green);
+    padding: 32px 40px;
+    text-align: center;
+  }
+
+  .model-header h2 {
+    font-size: 32px;
+    font-weight: 900;
+    color: #080C10;
+    letter-spacing: -1px;
+    margin-bottom: 6px;
+  }
+
+  .model-header p {
+    font-size: 15px;
+    color: rgba(8,12,16,0.7);
+    font-weight: 500;
+  }
+
+  .model-body {
+    padding: 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 32px;
+  }
+
+  .model-item {
+    text-align: center;
+  }
+
+  .model-item-icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .model-item h4 {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .model-item p {
+    font-size: 13px;
+    color: var(--text-2);
+    line-height: 1.55;
+  }
+
+  .model-footer {
+    background: rgba(0,211,127,0.05);
+    border-top: 1px solid var(--border);
+    padding: 24px 40px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-2);
+  }
+
+  .model-footer strong { color: var(--green); }
+
+  /* ── Why Section ── */
+  .why-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-top: 60px;
+  }
+
+  .why-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px 28px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .why-card:hover {
+    border-color: var(--border-hi);
+    transform: translateY(-2px);
+  }
+
+  .why-card-icon {
+    font-size: 28px;
+    margin-bottom: 20px;
+    display: block;
+    width: 52px; height: 52px;
+    background: var(--green-dim);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(0,211,127,0.15);
+    margin-bottom: 20px;
+  }
+
+  .why-card h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    letter-spacing: -0.3px;
+  }
+
+  .why-card p {
+    font-size: 13px;
+    color: var(--text-2);
+    line-height: 1.65;
+  }
+
+  /* ── CTA Section ── */
+  .cta-section {
+    padding: 120px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-glow {
+    position: absolute;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(0,211,127,0.07) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .cta-section h2 {
+    font-size: clamp(36px, 5vw, 58px);
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1.1;
+    max-width: 700px;
+    margin: 0 auto 20px;
+  }
+
+  .cta-section p {
+    font-size: 18px;
+    color: var(--text-2);
+    margin-bottom: 48px;
+  }
+
+  .waitlist-form {
+    display: flex;
+    gap: 12px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .waitlist-input {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border-hi);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 15px;
+    color: var(--text-1);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .waitlist-input::placeholder { color: var(--text-3); }
+  .waitlist-input:focus { border-color: var(--green); }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text-2);
+  }
+
+  .footer-note {
+    font-size: 13px;
+    color: var(--text-3);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    nav { padding: 16px 20px; }
+    .nav-links { display: none; }
+    .section-inner { padding: 70px 20px; }
+    .problem-grid { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr 1fr; }
+    .why-grid { grid-template-columns: 1fr; }
+    .model-body { grid-template-columns: 1fr; }
+    .waitlist-form { flex-direction: column; }
+    footer { flex-direction: column; gap: 16px; text-align: center; }
+    .hero-stats { flex-direction: column; }
+    .hero-stat { border-right: none; border-bottom: 1px solid var(--border); }
+    .hero-stat:last-child { border-bottom: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Nav ── -->
+<nav>
+  <div class="nav-logo">
+    <div class="logo-mark">C</div>
+    ClaimFlow <span class="logo-ai">AI</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#model">Pricing</a></li>
+    <li><a href="#why">Why us</a></li>
+  </ul>
+  <a href="#waitlist" class="nav-cta">Get early access →</a>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="hero-glow"></div>
+
+  <div class="hero-badge">Healthcare Claims Recovery · Powered by AI</div>
+
+  <h1>
+    Stop leaving<br>
+    <span class="highlight">your money</span><br>
+    on the table.
+  </h1>
+
+  <p class="hero-sub">
+    Insurance companies deny 1 in 5 claims. Most practices never appeal.
+    ClaimFlow AI fights back automatically — and only gets paid when you do.
+  </p>
+
+  <div class="hero-cta-group">
+    <a href="#waitlist" class="btn-primary">Join the waitlist →</a>
+    <a href="#how" class="btn-secondary">See how it works</a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <div class="hero-stat-num">$935B</div>
+      <div class="hero-stat-label">Denied annually in the US</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-num">9 in 10</div>
+      <div class="hero-stat-label">Practices never appeal</div>
+    </div>
+    <div class="hero-stat">
+      <div class="hero-stat-num">20%</div>
+      <div class="hero-stat-label">Success fee only — zero upfront</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Problem ── -->
+<section class="problem" id="problem">
+  <div class="section-inner">
+    <div class="section-label">The Problem</div>
+    <h2 class="section-title">Your practice is losing<br>money it's already owed.</h2>
+    <p class="section-sub">Insurance companies count on you being too busy to fight back. Most practices write off denied claims as a cost of doing business. They shouldn't.</p>
+
+    <div class="problem-grid">
+      <div class="problem-cards">
+        <div class="problem-card">
+          <div class="problem-icon">⏱️</div>
+          <div>
+            <h3>No time to appeal</h3>
+            <p>Appealing a single denial can take 2–4 hours of staff time. Most practices don't have a dedicated billing team to handle it.</p>
+          </div>
+        </div>
+        <div class="problem-card">
+          <div class="problem-icon">📋</div>
+          <div>
+            <h3>Complex payer rules</h3>
+            <p>Every insurance company has different appeal formats, timelines, and requirements. Getting it wrong means automatic rejection.</p>
+          </div>
+        </div>
+        <div class="problem-card">
+          <div class="problem-icon">💸</div>
+          <div>
+            <h3>Revenue just disappears</h3>
+            <p>Denied claims expire. Miss the appeal window and that revenue is gone forever — written off as uncollectable.</p>
+          </div>
+        </div>
+        <div class="problem-card">
+          <div class="problem-icon">🏥</div>
+          <div>
+            <h3>Enterprise tools don't help small practices</h3>
+            <p>Big RCM platforms are built for hospitals. Small clinics are left to manage denials manually with spreadsheets.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="problem-quote">
+        <div class="big-stat">$140K</div>
+        <div class="big-stat-label">Average annual revenue lost to unchallenged denials for a 3-physician practice billing $1.2M/year.</div>
+        <div class="sub-stats">
+          <div class="sub-stat">
+            <span class="sub-stat-label">Average denial rate</span>
+            <span class="sub-stat-val">15–20%</span>
+          </div>
+          <div class="sub-stat">
+            <span class="sub-stat-label">Of denied claims that are appealable</span>
+            <span class="sub-stat-val">~60%</span>
+          </div>
+          <div class="sub-stat">
+            <span class="sub-stat-label">Practices that consistently appeal</span>
+            <span class="sub-stat-val">1 in 10</span>
+          </div>
+          <div class="sub-stat">
+            <span class="sub-stat-label">Win rate on properly filed appeals</span>
+            <span class="sub-stat-val">50–75%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── How it Works ── -->
+<section id="how">
+  <div class="section-inner">
+    <div class="section-label">How it works</div>
+    <h2 class="section-title">Set it up once.<br>Recover continuously.</h2>
+    <p class="section-sub">ClaimFlow connects to your existing practice management system and runs silently in the background — no workflow changes, no new staff.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">Step 01</div>
+        <span class="step-icon">🔌</span>
+        <h3>Connect your system</h3>
+        <p>ClaimFlow integrates with your existing EHR or practice management software via API. Setup takes under 30 minutes.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Step 02</div>
+        <span class="step-icon">🔍</span>
+        <h3>AI identifies denials</h3>
+        <p>Our system automatically scans incoming claim responses, classifies denial codes, and calculates recovery probability for each one.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Step 03</div>
+        <span class="step-icon">📝</span>
+        <h3>Appeals written & submitted</h3>
+        <p>Compliance-grade appeal letters are generated and submitted — customized per payer, per denial type, per regulation. No human bottleneck.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Step 04</div>
+        <span class="step-icon">💰</span>
+        <h3>You get paid. We get paid.</h3>
+        <p>When claims are recovered, you receive the payment. ClaimFlow takes 20% of what was recovered. Nothing else, ever.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Model ── -->
+<section class="model-section" id="model">
+  <div class="section-inner">
+    <div class="section-label">Pricing</div>
+    <h2 class="section-title" style="text-align:center">Zero risk.<br>Zero upfront cost.</h2>
+    <p class="section-sub" style="margin: 0 auto; text-align:center">We only make money when you make money. That's the only way this should work.</p>
+
+    <div class="model-card">
+      <div class="model-header">
+        <h2>20% Success Fee</h2>
+        <p>Charged only on recovered revenue. Nothing if we don't recover anything.</p>
+      </div>
+      <div class="model-body">
+        <div class="model-item">
+          <span class="model-item-icon">🚫</span>
+          <h4>No monthly fees</h4>
+          <p>No subscriptions, no platform fees, no hidden charges. Zero.</p>
+        </div>
+        <div class="model-item">
+          <span class="model-item-icon">🤝</span>
+          <h4>No setup costs</h4>
+          <p>Integration, onboarding, and configuration are all included. We handle it.</p>
+        </div>
+        <div class="model-item">
+          <span class="model-item-icon">📊</span>
+          <h4>Full transparency</h4>
+          <p>Monthly recovery reports showing every claim, every appeal, every dollar returned.</p>
+        </div>
+      </div>
+      <div class="model-footer">
+        A practice recovering <strong>$50,000/year</strong> in denied claims pays ClaimFlow <strong>$10,000</strong> — and keeps <strong>$40,000</strong> they would have written off.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Why ClaimFlow ── -->
+<section id="why">
+  <div class="section-inner">
+    <div class="section-label">Why ClaimFlow</div>
+    <h2 class="section-title">Built for the practices<br>the big players ignore.</h2>
+    <p class="section-sub">Enterprise RCM platforms charge six figures and are built for hospital systems. ClaimFlow was designed specifically for independent practices — and priced accordingly.</p>
+
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="why-card-icon">🤖</div>
+        <h3>AI-native from day one</h3>
+        <p>Not a legacy billing tool with an AI layer bolted on. The entire appeal engine is built around AI — from denial classification to letter generation to submission logic.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-card-icon">🔒</div>
+        <h3>HIPAA-compliant by design</h3>
+        <p>End-to-end encryption, Business Associate Agreements on day one, full audit trails, and zero PHI exposure in AI processing. Compliance isn't an afterthought.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-card-icon">⚡</div>
+        <h3>No workflow disruption</h3>
+        <p>ClaimFlow runs in the background. Your staff doesn't learn a new system. Your day doesn't change. Revenue just starts coming back.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-card-icon">📬</div>
+        <h3>Payer-specific appeals</h3>
+        <p>Not generic templates. Every appeal is customized for the specific payer, the specific denial code, and the applicable federal and state regulations.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-card-icon">👁️</div>
+        <h3>Human review when it matters</h3>
+        <p>Appeals below our quality threshold are flagged for human review — never submitted blind. We protect your payer relationships, not just the claim.</p>
+      </div>
+      <div class="why-card">
+        <div class="why-card-icon">📈</div>
+        <h3>Gets smarter over time</h3>
+        <p>Every appeal outcome trains the system. Win rates improve, classification improves, and recovery rates compound as the platform learns your payers.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="cta-section" id="waitlist">
+  <div class="cta-glow"></div>
+  <div class="section-label" style="margin-bottom:20px">Early access</div>
+  <h2>Ready to recover<br>what's yours?</h2>
+  <p>We're onboarding our first pilot practices. No cost, no commitment — just results.</p>
+  <div class="waitlist-form">
+    <input type="email" class="waitlist-input" placeholder="your@practice.com">
+    <button class="btn-primary">Get access →</button>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="footer-logo">
+    <div class="logo-mark" style="width:26px;height:26px;font-size:13px;">C</div>
+    ClaimFlow AI
+  </div>
+  <div class="footer-note">© 2026 ClaimFlow AI · Built by Dark Matter Systems</div>
+</footer>
+
+</body>
+</html>
